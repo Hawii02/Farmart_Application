@@ -1,18 +1,21 @@
+from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import MetaData
+from sqlalchemy.orm import validates, relationship
 from sqlalchemy_serializer import SerializerMixin
+from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_bcrypt import Bcrypt
 
-db = SQLAlchemy()
-bcrypt = Bcrypt()
+metadata = MetaData(naming_convention={
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+})
 
-class User(db.Model):
-    __tablename__ = 'user'
+db = SQLAlchemy(metadata=metadata)
 
-    id = db.Column(db.Integer, primary_key = True)
-    username = db.Column(db.String, unique=True)
-    _password_hash = db.Column(db.String, nullable = False)
-    email = db.Column(db.String(100))
-    location = db.Column()
-    order = db.Column()
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-class Farmer(db.model):
-    __tablename__ = ''
+db.init_app(app)
+bcrypt = Bcrypt() 
