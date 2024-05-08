@@ -6,6 +6,7 @@ from sqlalchemy_serializer import SerializerMixin
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bcrypt import Bcrypt
+import re
 
 metadata = MetaData(naming_convention={
     "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
@@ -32,8 +33,22 @@ class Animal(db.Model, SerializerMixin):
     farmer_id = db.Column(db.Integer, db.ForeignKey('farmers.id'))
     image_url = db.Column(db.String(255)) 
 
+    @validates('price')
+    def validate_price(self, key, price):
+        if price < 0:
+            raise ValueError("Price must be non-negative.")
+        return price
+
+    @validates('status')
+    def validate_status(self, key, status):
+        valid_statuses = {'Available', 'Sold Out', 'Pending'}
+        if status not in valid_statuses:
+            raise ValueError("Invalid status for animal.")
+        return status
+    
+
     def __repr__(self):
-        return f'<Animal {self.type} {self.breed} aged {self.age}>'
+        return f'<Animal {self.type} {self.breed}>'
     
 class Farmer(db.Model, SerializerMixin):
     __tablename__ = 'farmers'
@@ -59,6 +74,15 @@ class Farmer(db.Model, SerializerMixin):
         if not re.match(r"[^@]+@[^@]+\.[^@]+", address):
             raise ValueError("Invalid email address")
         return address
+    
+    @validates('password_hash')
+    def validate_password(self, key, password):
+        password_regex = r'(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}'  # Example: At least one number, one lowercase and one uppercase letter, and at least 8 characters
+        if not re.match(password_regex, password):
+            raise ValueError("Password must contain at least 8 characters, including one number, one lowercase and one uppercase letter.")
+        return generate_password_hash(password)
+    
+    serialize_rules = ('-password_hash',)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -92,6 +116,15 @@ class User(db.Model, SerializerMixin):
         if not re.match(r"[^@]+@[^@]+\.[^@]+", address):
             raise ValueError("Invalid email address")
         return address
+    
+    @validates('password_hash')
+    def validate_password(self, key, password):
+        password_regex = r'(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}'  # Example: At least one number, one lowercase and one uppercase letter, and at least 8 characters
+        if not re.match(password_regex, password):
+            raise ValueError("Password must contain at least 8 characters, including one number, one lowercase and one uppercase letter.")
+        return generate_password_hash(password)
+
+    serialize_rules = ('-password_hash',)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
