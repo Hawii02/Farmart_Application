@@ -20,7 +20,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 bcrypt = Bcrypt() 
 
-class Animal(db.Model):
+class Animal(db.Model, SerializerMixin):
     __tablename__ = 'animals'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -30,11 +30,12 @@ class Animal(db.Model):
     status = db.Column(db.String(20), default='Available')  # e.g., Available, Sold Out
     description = db.Column(db.Text)
     farmer_id = db.Column(db.Integer, db.ForeignKey('farmers.id'))
+    image_url = db.Column(db.String(255)) 
 
     def __repr__(self):
         return f'<Animal {self.type} {self.breed} aged {self.age}>'
     
-class Farmer(db.Model):
+class Farmer(db.Model, SerializerMixin):
     __tablename__ = 'farmers'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -45,6 +46,20 @@ class Farmer(db.Model):
     location = db.Column(db.String(100))
     animals = db.relationship('Animal', backref='farmer', lazy=True)
 
+    @validates('username')
+    def validate_username(self, key, username):
+        if not username:
+            raise ValueError('Username is required.')
+        if len(username) < 3:
+            raise ValueError('Username must be at least 3 characters long.')
+        return username
+    
+    @validates('email')
+    def validate_email(self, key, address):
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", address):
+            raise ValueError("Invalid email address")
+        return address
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
@@ -54,7 +69,7 @@ class Farmer(db.Model):
     def __repr__(self):
         return f'<Farmer {self.username} at {self.farm_name}>'
     
-class User(db.Model):
+class User(db.Model, SerializerMixin):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -63,6 +78,20 @@ class User(db.Model):
     password_hash = db.Column(db.String(128))
     address = db.Column(db.String(255))
     orders = db.relationship('Order', backref='user', lazy=True)
+
+    @validates('username')
+    def validate_username(self, key, username):
+        if not username:
+            raise ValueError('Username is required.')
+        if len(username) < 3:
+            raise ValueError('Username must be at least 3 characters long.')
+        return username
+    
+    @validates('email')
+    def validate_email(self, key, address):
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", address):
+            raise ValueError("Invalid email address")
+        return address
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -73,7 +102,7 @@ class User(db.Model):
     def __repr__(self):
         return f'<User {self.username}>'
     
-class Order(db.Model):
+class Order(db.Model, SerializerMixin):
     __tablename__ = 'orders'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -86,7 +115,7 @@ class Order(db.Model):
     def __repr__(self):
         return f'<Order {self.id} by User {self.user_id}>'
 
-class OrderDetail(db.Model):
+class OrderDetail(db.Model, SerializerMixin):
     __tablename__ = 'order_details'
 
     id = db.Column(db.Integer, primary_key=True)
