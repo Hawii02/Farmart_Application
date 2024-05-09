@@ -21,6 +21,16 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 bcrypt = Bcrypt() 
 
+class Category(db.Model, SerializerMixin):
+    __tablename__ = 'categories'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False, unique=True)
+    animals = db.relationship('Animal', backref='category', lazy=True)
+
+    def __repr__(self):
+        return f'<Category {self.name}>'
+    
 class Animal(db.Model, SerializerMixin):
     __tablename__ = 'animals'
 
@@ -28,10 +38,11 @@ class Animal(db.Model, SerializerMixin):
     type = db.Column(db.String(50), nullable=False)
     breed = db.Column(db.String(50), nullable=False)
     price = db.Column(db.Float, nullable=False)
-    status = db.Column(db.String(20), default='Available')  # e.g., Available, Sold Out
+    status = db.Column(db.String(20), default='Available')  # e.g., Available, Sold Out, Pending
     description = db.Column(db.Text)
     farmer_id = db.Column(db.Integer, db.ForeignKey('farmers.id'))
-    image_url = db.Column(db.String(255)) 
+    image_url = db.Column(db.String(255))
+    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
 
     @validates('price')
     def validate_price(self, key, price):
@@ -45,10 +56,10 @@ class Animal(db.Model, SerializerMixin):
         if status not in valid_statuses:
             raise ValueError("Invalid status for animal.")
         return status
-    
 
     def __repr__(self):
-        return f'<Animal {self.type} {self.breed}>'
+        return f'<Animal {self.type} {self.breed} in category {self.category.name}>'
+
     
 class Farmer(db.Model, SerializerMixin):
     __tablename__ = 'farmers'
