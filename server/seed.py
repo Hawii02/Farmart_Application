@@ -87,3 +87,91 @@ def seed_all():
 
 if __name__ == '__main__':
     seed_all()
+
+
+
+
+
+# from flask_sqlalchemy import SQLAlchemy
+# from flask_bcrypt import Bcrypt
+# from models import db, Farmer, Animal, User, Order, OrderDetail
+# from datetime import datetime, date
+# from flask import Flask
+
+# app = Flask(__name__)
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+# db.init_app(app)
+# bcrypt = Bcrypt(app)
+
+# def clear_data():
+#     with app.app_context():
+#         db.drop_all()
+#         db.create_all()
+
+# def create_farmer():
+#     with app.app_context():
+#         farmer = Farmer(
+#             username='farmer',
+#             email='farmer@example.com',
+#             farm_name='Farmy Farm',
+#             location='Farmville'
+#         )
+#         farmer.set_password('password')
+#         db.session.add(farmer)
+#         db.session.commit()
+
+# # Define your real-life animal data here
+# REAL_ANIMAL_DATA = [
+#     {'type': 'Cow', 'breed': 'Angus', 'price': 500, 'status': 'Available', 'image_url': 'https://example.com/cow.jpg'},
+#     {'type': 'Sheep', 'breed': 'Dorper', 'price': 300, 'status': 'Available', 'image_url': 'https://example.com/sheep.jpg'},
+#     # Add more animal data as needed
+# ]
+
+# def seed_animals():
+#     with app.app_context():
+#         for animal_data in REAL_ANIMAL_DATA:
+#             animal = Animal(**animal_data)
+#             db.session.add(animal)
+#         db.session.commit()
+
+# # Define your real-life user data here
+# REAL_USER_DATA = [
+#     {'username': 'john_doe', 'email': 'john@example.com', 'address': '123 Main St, Anytown, USA'},
+#     {'username': 'jane_smith', 'email': 'jane@example.com', 'address': '456 Elm St, Othertown, USA'},
+#     # Add more user data as needed
+# ]
+
+# def seed_users():
+#     with app.app_context():
+#         for user_data in REAL_USER_DATA:
+#             user = User(**user_data)
+#             user.set_password('password')
+#             db.session.add(user)
+#         db.session.commit()
+
+# # Define your real-life order data here
+# REAL_ORDER_DATA = [
+#     {'user_id': 1, 'total_price': 1500, 'order_date': date(2023, 5, 1)},  # Assuming user ID 1 is the farmer
+#     {'user_id': 2, 'total_price': 800, 'order_date': date(2023, 4, 15)},
+#     # Add more order data as needed
+# ]
+
+# def seed_orders():
+#     with app.app_context():
+#         for order_data in REAL_ORDER_DATA:
+#             order = Order(**order_data)
+#             db.session.add(order)
+#             db.session.commit()  # Commit order first to get its ID
+            
+#             # Add real-life order details here if available
+#         db.session.commit()
+
+# def seed_all():
+#     clear_data()
+#     create_farmer()
+#     seed_animals()
+#     seed_users()
+#     seed_orders()
+
+# if __name__ == '__main__':
+#     seed_all()
