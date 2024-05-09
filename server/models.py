@@ -98,3 +98,5 @@ class OrderDetail(db.Model):
     def __repr__(self):
         return f'<OrderDetail for Order {self.order_id}, Animal {self.animal_id}>'
     
+
+    
