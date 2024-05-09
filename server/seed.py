@@ -38,7 +38,8 @@ def seed_animals(num_animals=10):
                 type=fake.word(),
                 breed=fake.word(),
                 price=fake.random_number(digits=5),
-                status='available'
+                status=fake.random_element(elements=('Available', 'Sold Out', 'Pending')),
+                image_url=fake.image_url()
             )
             db.session.add(animal)
         db.session.commit()
@@ -86,11 +87,3 @@ def seed_all():
 
 if __name__ == '__main__':
     seed_all()
-
-
-
-
-
-
-
-
