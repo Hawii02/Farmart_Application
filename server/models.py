@@ -171,3 +171,16 @@ class OrderDetail(db.Model, SerializerMixin):
     def __repr__(self):
         return f'<OrderDetail for Order {self.order_id}, Animal {self.animal_id}>'
     
+# class Cart(db.Model, SerializerMixin):
+#     __tablename__ = 'carts'
+#     id = db.Column(db.Integer, primary_key=True)
+#     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+#     items = db.relationship('CartItem', backref='cart', lazy=True)
+
+# class CartItem(db.Model, SerializerMixin):
+#     __tablename__ = 'cart_items'
+#     id = db.Column(db.Integer, primary_key=True)
+#     cart_id = db.Column(db.Integer, db.ForeignKey('carts.id'))
+#     animal_id = db.Column(db.Integer, db.ForeignKey('animals.id'))
+#     quantity = db.Column(db.Integer, default=1)
+    
