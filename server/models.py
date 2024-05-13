@@ -44,7 +44,7 @@ class Animal(db.Model, SerializerMixin):
     image_url = db.Column(db.String(255))
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
 
-    @validates('price')
+    @validates(price)
     def validate_price(self, key, price):
         if price < 0:
             raise ValueError("Price must be non-negative.")
@@ -112,7 +112,7 @@ class User(db.Model, SerializerMixin):
     email = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(128))
     address = db.Column(db.String(255))
-    orders = db.relationship('Order', backref='user', lazy=True)
+    carts = db.relationship('Cart', backref='user', lazy=True)
 
     @validates('username')
     def validate_username(self, key, username):

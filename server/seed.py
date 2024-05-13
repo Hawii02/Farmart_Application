@@ -139,5 +139,5 @@ def seed_data():
 
         print('Successfully created animals and categories')
 
-if __name__ == '_main_':
+if __name__ == '__main__':
     seed_data()
