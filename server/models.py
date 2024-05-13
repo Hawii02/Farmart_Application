@@ -166,7 +166,7 @@ class CartItem(db.Model, SerializerMixin):
     cart_id = db.Column(db.Integer, db.ForeignKey('carts.id'))
     animal_id = db.Column(db.Integer, db.ForeignKey('animals.id'))
     quantity = db.Column(db.Integer, default=1)
-    unit_price = db.Column(db.)
+    unit_price = db.Column(db.Float)
     
     def __repr__(self):
         return f'<CartItem for Cart {self.cart_id}, Animal {self.animal_id}>'
