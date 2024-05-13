@@ -1,10 +1,10 @@
-from flask import Flask, request,render_template, redirect, url_for, flash, request, jsonify, session
+from flask import Flask, request, render_template, redirect, url_for, flash, jsonify, session
 from flask_migrate import Migrate
-from models import db, Animal, Farmer, User, Order, OrderDetail , Category
-# from forms import RegistrationForm
+from models import db, Animal, Farmer, User, Category, Cart, CartItem
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token
+from sqlalchemy.exc import IntegrityError
 import os
 
 secret_key = os.urandom(16)
@@ -20,19 +20,15 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.json.compact = False
 app.config['SECRET_KEY'] = secret_key
 app.config['JWT_SECRET_KEY'] = secret_key
+app.config['SESSION_TYPE'] = 'filesystem'  # Configure session type
 CORS(app)
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
-
 
 migrate = Migrate(app, db)
 
 db.init_app(app)
 bcrypt.init_app(app)
-
-@app.before_first_request
-def create_tables():
-    db.create_all()
 
 # Farmer Routes
 @app.route('/register/farmer', methods=['POST'])
@@ -145,12 +141,6 @@ def add_category():
     db.session.commit()
     return jsonify({'message': 'Category added successfully'}), 201
 
-# Route to list all categories
-@app.route('/categories', methods=['GET'])
-def list_categories():
-    categories = Category.query.all()
-    return jsonify([category.serialize() for category in categories]), 200
-
 # Route to search animals by category
 @app.route('/animals/by_category', methods=['GET'])
 def search_animals_by_category():
@@ -161,62 +151,70 @@ def search_animals_by_category():
     animals = Animal.query.filter_by(category_id=category.id).all()
     return jsonify([animal.serialize() for animal in animals]), 200
 
-# Additional route functionality to list all animals
-@app.route('/animals', methods=['GET'])
-def list_animals():
-    animals = Animal.query.all()
-    return jsonify([animal.serialize() for animal in animals]), 200
 
-# @app.route('/cart', methods=['GET'])
-# def view_cart():
-#     if 'user_id' not in session:
-#         return jsonify({'message': 'Unauthorized'}), 401
-#     user_id = session['user_id']
-#     cart = Cart.query.filter_by(user_id=user_id).first()
-#     if not cart:
-#         return jsonify({'message': 'Cart is empty'}), 404
-#     cart_items = [{'animal_id': item.animal_id, 'quantity': item.quantity} for item in cart.items]
-#     return jsonify(cart_items), 200
+@app.route('/cart', methods=['GET'])
+def view_cart():
+    if 'user_id' not in session:
+        return jsonify({'message': 'Unauthorized'}), 401
+    user_id = session['user_id']
+    try:
+        cart = Cart.query.filter_by(user_id=user_id).one()
+        cart_items = [
+            {'animal_id': item.animal_id, 'quantity': item.quantity, 'unit_price': item.animal.price}
+            for item in cart.items
+        ]
+        return jsonify({
+            'total_price': cart.total_price,
+            'status': cart.status,
+            'order_date': cart.order_date,
+            'items': cart_items
+        }), 200
+    except NoResultFound:
+        return jsonify({'message': 'Cart is empty'}), 404
 
-# @app.route('/cart/add', methods=['POST'])
-# def add_to_cart():
-#     if 'user_id' not in session:
-#         return jsonify({'message': 'Unauthorized'}), 401
-#     user_id = session['user_id']
-#     animal_id = request.json.get('animal_id')
-#     quantity = request.json.get('quantity', 1)  # Default quantity is 1 if not specified
+@app.route('/cart/add', methods=['POST'])
+def add_to_cart():
+    if 'user_id' not in session:
+        return jsonify({'message': 'Unauthorized'}), 401
+    user_id = session['user_id']
+    animal_id = request.json.get('animal_id')
+    quantity = request.json.get('quantity', 1)
 
-#     # Ensure the animal exists
-#     if not Animal.query.get(animal_id):
-#         return jsonify({'message': 'Animal not found'}), 404
+    animal = Animal.query.get_or_404(animal_id, description='Animal not found')
+    cart = Cart.query.filter_by(user_id=user_id).first()
 
-#     # Retrieve or create a cart
-#     cart = Cart.query.filter_by(user_id=user_id).first()
-#     if not cart:
-#         cart = Cart(user_id=user_id)
-#         db.session.add(cart)
+    if not cart:
+        cart = Cart(user_id=user_id, total_price=0.0, status='Pending')
+        db.session.add(cart)
 
-#     # Add item to the cart
-#     cart_item = CartItem.query.filter_by(cart_id=cart.id, animal_id=animal_id).first()
-#     if cart_item:
-#         cart_item.quantity += quantity  # Increment the quantity if the item already exists
-#     else:
-#         new_cart_item = CartItem(cart_id=cart.id, animal_id=animal_id, quantity=quantity)
-#         db.session.add(new_cart_item)
+    cart_item = CartItem.query.filter_by(cart_id=cart.id, animal_id=animal_id).first()
+    if cart_item:
+        cart_item.quantity += quantity
+    else:
+        cart_item = CartItem(cart_id=cart.id, animal_id=animal_id, quantity=quantity)
+        db.session.add(cart_item)
 
-#     db.session.commit()
-#     return jsonify({'message': 'Item added to cart'}), 201
+    db.session.flush()  # Update the DB state without committing to recalculate total price
+    total_price = sum(item.animal.price * item.quantity for item in cart.items)
+    cart.total_price = total_price
+    db.session.commit()
+    return jsonify({'message': 'Item added to cart', 'total_price': cart.total_price}), 201
 
-# @app.route('/cart/remove/<int:item_id>', methods=['DELETE'])
-# def remove_from_cart(item_id):
-#     if 'user_id' not in session:
-#         return jsonify({'message': 'Unauthorized'}), 401
-#     cart_item = CartItem.query.get(item_id)
-#     if not cart_item or cart_item.cart.user_id != session['user_id']:
-#         return jsonify({'message': 'Item not found in your cart'}), 404
-#     db.session.delete(cart_item)
-#     db.session.commit()
-#     return jsonify({'message': 'Item removed from cart'}), 200
+@app.route('/cart/remove/<int:item_id>', methods=['DELETE'])
+def remove_from_cart(item_id):
+    if 'user_id' not in session:
+        return jsonify({'message': 'Unauthorized'}), 401
+    cart_item = CartItem.query.get_or_404(item_id, description='Item not found in your cart')
+    if cart_item.cart.user_id != session['user_id']:
+        return jsonify({'message': 'Operation not allowed'}), 403
+
+    db.session.delete(cart_item)
+    db.session.flush()  # Update DB state to recalculate total price
+
+    cart = Cart.query.filter_by(id=cart_item.cart_id).first()
+    cart.total_price = sum(item.animal.price * item.quantity for item in cart.items)
+    db.session.commit()
+    return jsonify({'message': 'Item removed from cart', 'total_price': cart.total_price}), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
