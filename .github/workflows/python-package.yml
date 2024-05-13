@@ -34,6 +34,7 @@ jobs:
         pip install flask_bcrypt
         pip install flask_jwt_extended
         pip install SQLAlchemy_Serializer
+        pip install flask
         
     - name: Lint with flake8
       run: |
