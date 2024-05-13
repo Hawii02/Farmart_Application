@@ -112,7 +112,7 @@ class User(db.Model, SerializerMixin):
     email = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(128))
     address = db.Column(db.String(255))
-    orders = db.relationship('Order', backref='user', lazy=True)
+    carts = db.relationship('Cart', backref='user', lazy=True)
 
     @validates('username')
     def validate_username(self, key, username):
@@ -146,30 +146,30 @@ class User(db.Model, SerializerMixin):
     def __repr__(self):
         return f'<User {self.username}>'
     
-class Order(db.Model, SerializerMixin):
-    __tablename__ = 'orders'
+class Cart(db.Model, SerializerMixin):
+    __tablename__ = 'carts'
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     total_price = db.Column(db.Float)
     status = db.Column(db.String(20), default='Pending')  # e.g., Pending, Confirmed, Rejected
     order_date = db.Column(db.DateTime, onupdate=db.func.now())
-    details = db.relationship('OrderDetail', backref='order', lazy=True)
+    items = db.relationship('CartItem', backref='cart', lazy=True)
 
     def __repr__(self):
-        return f'<Order {self.id} by User {self.user_id}>'
+        return f'<Cart {self.id} by User {self.user_id}>'
 
-class OrderDetail(db.Model, SerializerMixin):
-    __tablename__ = 'order_details'
+class CartItem(db.Model, SerializerMixin):
+    __tablename__ = 'cartItems'
 
     id = db.Column(db.Integer, primary_key=True)
-    order_id = db.Column(db.Integer, db.ForeignKey('orders.id'))
+    cart_id = db.Column(db.Integer, db.ForeignKey('carts.id'))
     animal_id = db.Column(db.Integer, db.ForeignKey('animals.id'))
     quantity = db.Column(db.Integer, default=1)
     unit_price = db.Column(db.Float)
 
     def __repr__(self):
-        return f'<OrderDetail for Order {self.order_id}, Animal {self.animal_id}>'
+        return f'<CartItem for Cart {self.cart_id}, Animal {self.animal_id}>'
     
 
     
