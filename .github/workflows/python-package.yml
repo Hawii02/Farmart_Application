@@ -29,12 +29,12 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install flake8 pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip install flask_cors
-        pip install flask_SQLALCHEMY
-        pip install flask_bcrypt
-        pip install flask_jwt_extended
+        pip install Flask_cors
+        pip install Flask_SQLALCHEMY
+        pip install Flask_bcrypt
+        pip install Flask_jwt_extended
         pip install SQLAlchemy_Serializer
-        pip install flask
+        pip install Flask
         
     - name: Lint with flake8
       run: |
