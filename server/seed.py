@@ -3,6 +3,7 @@ from models import Animal, Category
 
 def seed_data():
     with app.app_context():
+        db.create_all()
 
         print('Deleting existing data...')
 
@@ -139,5 +140,6 @@ def seed_data():
 
         print('Successfully created animals and categories')
 
-if __name__ == '_main_':
-    seed_data()
+if __name__ == '__main__':
+    with app.app_context():
+        seed_data()
