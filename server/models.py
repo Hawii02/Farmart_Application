@@ -112,6 +112,7 @@ class User(db.Model, SerializerMixin):
     email = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(128))
     address = db.Column(db.String(255))
+    role = db.Column(db.String(10), nullable=False)  # Add role field
     carts = db.relationship('Cart', backref='user', lazy=True)
 
     @validates('username')
